@@ -6,7 +6,10 @@ import { useEffect } from "react";
 export default function Providers({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js").catch(() => undefined);
+      navigator.serviceWorker
+        .getRegistrations()
+        .then((registrations) => Promise.all(registrations.map((reg) => reg.unregister())))
+        .catch(() => undefined);
     }
 
     const onBeforeInstallPrompt = () => undefined;

@@ -43,10 +43,6 @@ export default function NovoClientePage() {
       setErro("Informe o nome do cliente.");
       return;
     }
-    if (form.status === "VISITA_AGENDADA" && !form.visitDate) {
-      setErro("Informe a data da visita para clientes com status de visita.");
-      return;
-    }
     setSalvando(true);
     const res = await fetch("/api/clients", {
       method: "POST",
@@ -118,18 +114,6 @@ export default function NovoClientePage() {
           <Campo label="Próximo contato em">
             <input type="datetime-local" className={inputCls} value={form.nextContactAt} onChange={(e) => set("nextContactAt", e.target.value)} />
           </Campo>
-
-          {form.status === "VISITA_AGENDADA" && (
-            <Campo label="Data da visita" required>
-              <input
-                type="datetime-local"
-                required={form.status === "VISITA_AGENDADA"}
-                className={inputCls}
-                value={form.visitDate}
-                onChange={(e) => set("visitDate", e.target.value)}
-              />
-            </Campo>
-          )}
         </div>
 
         {erro && (

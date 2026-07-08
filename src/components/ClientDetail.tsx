@@ -36,6 +36,9 @@ export default function ClientDetail({ cliente: inicial }: { cliente: Cliente })
   const [nextContactAtInput, setNextContactAtInput] = useState(
     cliente.nextContactAt ? formatarDataLocal(cliente.nextContactAt) : ""
   );
+  const [visitDateInput, setVisitDateInput] = useState(
+    cliente.visitDate ? formatarDataLocal(cliente.visitDate) : ""
+  );
 
   async function enviarNota(e: React.FormEvent) {
     e.preventDefault();
@@ -72,18 +75,57 @@ export default function ClientDetail({ cliente: inicial }: { cliente: Cliente })
     router.push("/pipeline");
   }
 
+  async function limparVisita() {
+    if (!confirm("Remover a visita agendada deste cliente?")) return;
+    setSalvandoFollowUp(true);
+    const res = await fetch(`/api/clients/${cliente.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ visitDate: null }),
+    });
+    setSalvandoFollowUp(false);
+    if (res.ok) {
+      setVisitDateInput("");
+      setCliente((c) => ({ ...c, visitDate: null }));
+    }
+  }
+
+  async function ligarHoje() {
+    const agora = new Date();
+    const formatted = formatarDataLocal(agora);
+    setNextContactAtInput(formatted);
+    setSalvandoFollowUp(true);
+    const res = await fetch(`/api/clients/${cliente.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nextContactAt: formatted }),
+    });
+    setSalvandoFollowUp(false);
+    if (res.ok) {
+      const atualizado = await res.json();
+      setCliente((c) => ({ ...c, nextContactAt: atualizado.nextContactAt }));
+    }
+  }
+
   async function salvarFollowUp(e: React.FormEvent) {
     e.preventDefault();
     setSalvandoFollowUp(true);
     const res = await fetch(`/api/clients/${cliente.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ nextContactAt: nextContactAtInput || null }),
+      body: JSON.stringify({
+        nextContactAt: nextContactAtInput || null,
+        visitDate: visitDateInput || null,
+      }),
     });
     setSalvandoFollowUp(false);
     if (res.ok) {
       const atualizado = await res.json();
-      setCliente((c) => ({ ...c, nextContactAt: atualizado.nextContactAt }));
+      setCliente((c) => ({
+        ...c,
+        nextContactAt: atualizado.nextContactAt,
+        visitDate: atualizado.visitDate,
+      }));
     }
   }
 
@@ -137,9 +179,9 @@ export default function ClientDetail({ cliente: inicial }: { cliente: Cliente })
               <Info label="Corretor" valor={cliente.corretor?.name} />
             </div>
 
-            <form onSubmit={salvarFollowUp} className="mt-5 flex flex-col gap-2 rounded-xl border border-border/70 bg-panel2/80 p-3 sm:flex-row sm:items-end">
-              <label className="flex-1 text-xs font-medium uppercase tracking-wider text-ink-muted">
-                Atualizar próximo contato
+            <form onSubmit={salvarFollowUp} className="mt-5 grid gap-3 rounded-xl border border-border/70 bg-panel2/80 p-3 sm:grid-cols-2">
+              <label className="text-xs font-medium uppercase tracking-wider text-ink-muted">
+                Próximo contato
                 <input
                   type="datetime-local"
                   value={nextContactAtInput}
@@ -147,13 +189,41 @@ export default function ClientDetail({ cliente: inicial }: { cliente: Cliente })
                   className="mt-1 w-full rounded-xl border border-border bg-void px-3 py-3 text-sm text-ink outline-none transition focus:border-cyan/50 focus:ring-1 focus:ring-cyan/30"
                 />
               </label>
-              <button
-                type="submit"
-                disabled={salvandoFollowUp}
-                className="rounded-xl bg-cyan px-4 py-3 text-xs font-semibold text-void transition hover:bg-cyan-soft disabled:opacity-60"
-              >
-                {salvandoFollowUp ? "Salvando..." : "Salvar"}
-              </button>
+              <label className="text-xs font-medium uppercase tracking-wider text-ink-muted">
+                Data da visita
+                <input
+                  type="datetime-local"
+                  value={visitDateInput}
+                  onChange={(e) => setVisitDateInput(e.target.value)}
+                  className="mt-1 w-full rounded-xl border border-border bg-void px-3 py-3 text-sm text-ink outline-none transition focus:border-cyan/50 focus:ring-1 focus:ring-cyan/30"
+                />
+              </label>
+              <div className="flex flex-col gap-3 sm:col-span-2 sm:flex-row sm:justify-between">
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={ligarHoje}
+                    className="flex-1 rounded-xl border border-cyan/30 bg-cyan/10 px-4 py-3 text-xs font-semibold text-cyan-soft transition hover:bg-cyan/20 disabled:opacity-60"
+                  >
+                    Ligar hoje
+                  </button>
+                  <button
+                    type="button"
+                    onClick={limparVisita}
+                    disabled={!cliente.visitDate && !visitDateInput}
+                    className="flex-1 rounded-xl border border-danger/30 bg-danger/10 px-4 py-3 text-xs font-semibold text-danger transition hover:bg-danger/20 disabled:opacity-60"
+                  >
+                    Excluir visita
+                  </button>
+                </div>
+                <button
+                  type="submit"
+                  disabled={salvandoFollowUp}
+                  className="rounded-xl bg-cyan px-4 py-3 text-xs font-semibold text-void transition hover:bg-cyan-soft disabled:opacity-60"
+                >
+                  {salvandoFollowUp ? "Salvando..." : "Salvar"}
+                </button>
+              </div>
             </form>
           </div>
 

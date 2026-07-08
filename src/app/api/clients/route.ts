@@ -34,9 +34,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Data de visita inválida" }, { status: 400 });
   }
 
-  if (body.status === "VISITA_AGENDADA" && !parsedVisitDate) {
-    return NextResponse.json({ error: "Data da visita é obrigatória para status de visita." }, { status: 400 });
-  }
 
   const client = await prisma.client.create({
     data: {
