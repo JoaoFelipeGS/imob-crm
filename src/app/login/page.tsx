@@ -19,7 +19,7 @@ export default function LoginPage() {
       email,
       password: senha,
       redirect: false,
-      callbackUrl: "/pipeline",
+      callbackUrl: `${window.location.origin}/pipeline`,
     });
     setCarregando(false);
     if (res?.error) {
