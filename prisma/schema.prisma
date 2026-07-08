@@ -1,0 +1,103 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  ADMIN
+  CORRETOR
+}
+
+enum StatusPipeline {
+  NOVO_LEAD
+  CONTATO_FEITO
+  VISITA_AGENDADA
+  PROPOSTA_ENVIADA
+  NEGOCIACAO
+  FECHADO_GANHO
+  FECHADO_PERDIDO
+}
+
+enum StatusComissao {
+  PENDENTE
+  PARCIAL
+  RECEBIDA
+}
+
+enum Interesse {
+  COMPRA
+  VENDA
+  ALUGUEL
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(CORRETOR)
+  createdAt DateTime @default(now())
+
+  clients Client[]
+  notes   Note[]
+}
+
+model Client {
+  id            String         @id @default(cuid())
+  nome          String
+  telefone      String?
+  email         String?
+  origem        String?
+  interesse     Interesse      @default(COMPRA)
+  tipoImovel    String?
+  bairro        String?
+  valorImovel   Float?
+  status        StatusPipeline @default(NOVO_LEAD)
+  nextContactAt DateTime?
+  visitDate     DateTime?
+
+  corretorId String?
+  corretor   User?   @relation(fields: [corretorId], references: [id])
+
+  notes Note[]
+  deal  Deal?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Note {
+  id       String @id @default(cuid())
+  texto    String
+
+  clientId String
+  client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  autorId String?
+  autor   User?   @relation(fields: [autorId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model Deal {
+  id     String @id @default(cuid())
+
+  clientId String @unique
+  client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  imovel                  String?
+  valorVenda              Float?
+  valorComissao           Float?
+  statusComissao          StatusComissao @default(PENDENTE)
+  dataFechamento          DateTime       @default(now())
+  dataPrevistaRecebimento DateTime?
+  dataRecebimento         DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
