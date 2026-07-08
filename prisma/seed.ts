@@ -9,18 +9,18 @@ async function main() {
   await prisma.client.deleteMany();
   await prisma.user.deleteMany();
 
-  const senhaHash = await bcrypt.hash("991833563aB!!", 10);
+  const senhaHash = await bcrypt.hash("123456", 10);
 
   await prisma.user.create({
     data: {
-      name: "Felipe Gomes",
-      email: "felipegomesdasilvaj@gmail.com",
+      name: "Admin Imobiliária",
+      email: "admin@imobiliaria.com",
       password: senhaHash,
       role: "ADMIN",
     },
   });
 
-  console.log("Seed concluído. Login: felipegomesdasilvaj@gmail.com / senha: 991833563aB!!");
+  console.log("Seed concluído. Login: admin@imobiliaria.com / senha: 123456");
 }
 
 main()
