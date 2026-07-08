@@ -26,8 +26,11 @@ export default function LoginPage() {
       setErro("E-mail ou senha inválidos.");
       return;
     }
-    router.push("/pipeline");
-    router.refresh();
+    if (res?.url) {
+      router.push(res.url);
+    } else {
+      router.push("/pipeline");
+    }
   }
 
   return (
