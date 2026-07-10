@@ -44,6 +44,16 @@ export default function DashboardPage() {
 
   const visitas = clientes.filter((cliente) => cliente.status === "VISITA_AGENDADA" && cliente.visitDate);
 
+  function getWhatsAppUrl(telefone?: string | null) {
+    if (!telefone) return null;
+
+    const digits = telefone.replace(/\D/g, "");
+    if (!digits) return null;
+
+    const normalized = digits.startsWith("55") ? digits : `55${digits}`;
+    return `https://wa.me/${normalized}`;
+  }
+
   async function excluirCliente(clienteId: string, nome: string) {
     if (!confirm(`Excluir ${nome} definitivamente? Essa ação remove o lead e todos os dados associados.`)) {
       return;
@@ -106,29 +116,43 @@ export default function DashboardPage() {
             </div>
           ) : (
             <div className="space-y-3">
-              {clientesHoje.map((cliente) => (
-                <div key={cliente.id} className="rounded-3xl border border-border/70 bg-panel2 p-4 transition hover:border-cyan/40 hover:bg-panel/90">
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                      <p className="font-semibold text-ink">{cliente.nome}</p>
-                      <p className="mt-1 text-sm text-ink-muted">{cliente.telefone || "Telefone não disponível"}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="rounded-full bg-slate-950/70 px-3 py-1 text-sm text-cyan-soft">
-                        {formatDataHora(cliente.nextContactAt)}
+              {clientesHoje.map((cliente) => {
+                const whatsappUrl = getWhatsAppUrl(cliente.telefone);
+
+                return (
+                  <div key={cliente.id} className="rounded-3xl border border-border/70 bg-panel2 p-4 transition hover:border-cyan/40 hover:bg-panel/90">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <p className="font-semibold text-ink">{cliente.nome}</p>
+                        <p className="mt-1 text-sm text-ink-muted">{cliente.telefone || "Telefone não disponível"}</p>
                       </div>
-                      <button
-                        type="button"
-                        disabled={deletandoIds.includes(cliente.id)}
-                        onClick={() => excluirCliente(cliente.id, cliente.nome)}
-                        className="rounded-full border border-danger/30 bg-danger/10 px-3 py-1 text-xs font-semibold text-danger transition hover:bg-danger/20 disabled:opacity-60"
-                      >
-                        {deletandoIds.includes(cliente.id) ? "Excluindo..." : "Excluir"}
-                      </button>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <div className="rounded-full bg-slate-950/70 px-3 py-1 text-sm text-cyan-soft">
+                          {formatDataHora(cliente.nextContactAt)}
+                        </div>
+                        {whatsappUrl ? (
+                          <a
+                            href={whatsappUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-600 transition hover:bg-emerald-500/20"
+                          >
+                            WhatsApp
+                          </a>
+                        ) : null}
+                        <button
+                          type="button"
+                          disabled={deletandoIds.includes(cliente.id)}
+                          onClick={() => excluirCliente(cliente.id, cliente.nome)}
+                          className="rounded-full border border-danger/30 bg-danger/10 px-3 py-1 text-xs font-semibold text-danger transition hover:bg-danger/20 disabled:opacity-60"
+                        >
+                          {deletandoIds.includes(cliente.id) ? "Excluindo..." : "Excluir"}
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </section>
@@ -149,25 +173,41 @@ export default function DashboardPage() {
             </div>
           ) : (
             <div className="space-y-3">
-              {visitas.map((visita) => (
-                <div key={visita.id} className="rounded-3xl border border-border/70 bg-panel2 p-4 transition hover:border-violet/40 hover:bg-panel/90">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="font-semibold text-ink">{visita.nome}</p>
-                      <p className="mt-1 text-sm text-ink-muted">{visita.telefone || "Telefone não disponível"}</p>
-                      <p className="mt-2 text-xs uppercase tracking-[0.25em] text-violet-soft">{formatData(visita.visitDate)}</p>
+              {visitas.map((visita) => {
+                const whatsappUrl = getWhatsAppUrl(visita.telefone);
+
+                return (
+                  <div key={visita.id} className="rounded-3xl border border-border/70 bg-panel2 p-4 transition hover:border-violet/40 hover:bg-panel/90">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="font-semibold text-ink">{visita.nome}</p>
+                        <p className="mt-1 text-sm text-ink-muted">{visita.telefone || "Telefone não disponível"}</p>
+                        <p className="mt-2 text-xs uppercase tracking-[0.25em] text-violet-soft">{formatData(visita.visitDate)}</p>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        {whatsappUrl ? (
+                          <a
+                            href={whatsappUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-600 transition hover:bg-emerald-500/20"
+                          >
+                            WhatsApp
+                          </a>
+                        ) : null}
+                        <button
+                          type="button"
+                          disabled={deletandoIds.includes(visita.id)}
+                          onClick={() => excluirCliente(visita.id, visita.nome)}
+                          className="rounded-full border border-danger/30 bg-danger/10 px-3 py-1 text-xs font-semibold text-danger transition hover:bg-danger/20 disabled:opacity-60"
+                        >
+                          {deletandoIds.includes(visita.id) ? "Excluindo..." : "Excluir"}
+                        </button>
+                      </div>
                     </div>
-                    <button
-                      type="button"
-                      disabled={deletandoIds.includes(visita.id)}
-                      onClick={() => excluirCliente(visita.id, visita.nome)}
-                      className="rounded-full border border-danger/30 bg-danger/10 px-3 py-1 text-xs font-semibold text-danger transition hover:bg-danger/20 disabled:opacity-60"
-                    >
-                      {deletandoIds.includes(visita.id) ? "Excluindo..." : "Excluir"}
-                    </button>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </section>
