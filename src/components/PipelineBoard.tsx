@@ -90,7 +90,7 @@ export default function PipelineBoard() {
         />
       </div>
 
-      <div className="flex flex-1 gap-3 overflow-x-auto pb-4">
+      <div className="flex flex-1 flex-col gap-3 overflow-x-auto pb-4 lg:flex-row">
         {COLUNAS.map(({ key, final }) => {
           const status = STATUS_MAP[key];
           const itens = clientesFiltrados.filter((c) => c.status === key);
@@ -110,7 +110,7 @@ export default function PipelineBoard() {
                 setArrastando(null);
                 setColunaAlvo(null);
               }}
-              className={`flex w-[86vw] shrink-0 flex-col rounded-2xl border transition sm:w-72 ${
+              className={`flex min-h-[18rem] w-full shrink-0 flex-col rounded-2xl border transition lg:w-72 ${
                 colunaAlvo === key
                   ? "border-cyan/50 bg-cyan/5"
                   : "border-border bg-panel/40"
