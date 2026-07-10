@@ -27,7 +27,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   const body = await req.json();
 
   const data: any = {};
-  for (const field of ["nome", "telefone", "origem", "interesse", "tipoImovel", "bairro", "corretorId"]) {
+  for (const field of ["nome", "telefone", "email", "origem", "interesse", "tipoImovel", "bairro", "corretorId"]) {
     if (body[field] !== undefined) data[field] = body[field] || null;
   }
   if (body.valorImovel !== undefined) {

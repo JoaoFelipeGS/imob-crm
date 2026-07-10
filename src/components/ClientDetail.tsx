@@ -33,12 +33,53 @@ export default function ClientDetail({ cliente: inicial }: { cliente: Cliente })
   const [enviandoNota, setEnviandoNota] = useState(false);
   const [mudandoStatus, setMudandoStatus] = useState(false);
   const [salvandoFollowUp, setSalvandoFollowUp] = useState(false);
+  const [salvandoDados, setSalvandoDados] = useState(false);
+  const [nomeInput, setNomeInput] = useState(cliente.nome || "");
+  const [telefoneInput, setTelefoneInput] = useState(cliente.telefone || "");
+  const [emailInput, setEmailInput] = useState(cliente.email || "");
+  const [origemInput, setOrigemInput] = useState(cliente.origem || "");
+  const [interesseInput, setInteresseInput] = useState(cliente.interesse || "");
+  const [tipoImovelInput, setTipoImovelInput] = useState(cliente.tipoImovel || "");
+  const [bairroInput, setBairroInput] = useState(cliente.bairro || "");
+  const [valorInput, setValorInput] = useState(
+    cliente.valorImovel !== null && cliente.valorImovel !== undefined ? String(cliente.valorImovel) : ""
+  );
   const [nextContactAtInput, setNextContactAtInput] = useState(
     cliente.nextContactAt ? formatarDataLocal(cliente.nextContactAt) : ""
   );
   const [visitDateInput, setVisitDateInput] = useState(
     cliente.visitDate ? formatarDataLocal(cliente.visitDate) : ""
   );
+
+  async function salvarDadosLead(e: React.FormEvent) {
+    e.preventDefault();
+    setSalvandoDados(true);
+
+    const valorNormalizado = valorInput.toString().trim();
+    const valorNumero = valorNormalizado === "" ? null : Number(valorNormalizado.replace(/[^0-9.-]/g, ""));
+
+    const res = await fetch(`/api/clients/${cliente.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        nome: nomeInput,
+        telefone: telefoneInput,
+        email: emailInput,
+        origem: origemInput,
+        interesse: interesseInput,
+        tipoImovel: tipoImovelInput,
+        bairro: bairroInput,
+        valorImovel: valorNumero,
+      }),
+    });
+
+    setSalvandoDados(false);
+
+    if (res.ok) {
+      const atualizado = await res.json();
+      setCliente((c) => ({ ...c, ...atualizado }));
+    }
+  }
 
   async function enviarNota(e: React.FormEvent) {
     e.preventDefault();
@@ -198,6 +239,93 @@ export default function ClientDetail({ cliente: inicial }: { cliente: Cliente })
               <Info label="Data da visita" valor={cliente.visitDate ? formatDataHora(cliente.visitDate) : "—"} />
               <Info label="Corretor" valor={cliente.corretor?.name} />
             </div>
+
+            <form onSubmit={salvarDadosLead} className="mt-5 space-y-4 rounded-xl border border-border/70 bg-panel2/80 p-4">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="block text-xs font-semibold uppercase tracking-[0.25em] text-ink-faint">
+                  Nome
+                  <input
+                    value={nomeInput}
+                    onChange={(e) => setNomeInput(e.target.value)}
+                    className="mt-1 w-full rounded-xl border border-border bg-void px-3 py-3 text-sm text-ink outline-none transition focus:border-cyan/50 focus:ring-1 focus:ring-cyan/30"
+                    placeholder="Nome do cliente"
+                  />
+                </label>
+                <label className="block text-xs font-semibold uppercase tracking-[0.25em] text-ink-faint">
+                  Telefone
+                  <input
+                    value={telefoneInput}
+                    onChange={(e) => setTelefoneInput(e.target.value)}
+                    className="mt-1 w-full rounded-xl border border-border bg-void px-3 py-3 text-sm text-ink outline-none transition focus:border-cyan/50 focus:ring-1 focus:ring-cyan/30"
+                    placeholder="(00) 00000-0000"
+                  />
+                </label>
+                <label className="block text-xs font-semibold uppercase tracking-[0.25em] text-ink-faint">
+                  E-mail
+                  <input
+                    value={emailInput}
+                    onChange={(e) => setEmailInput(e.target.value)}
+                    className="mt-1 w-full rounded-xl border border-border bg-void px-3 py-3 text-sm text-ink outline-none transition focus:border-cyan/50 focus:ring-1 focus:ring-cyan/30"
+                    placeholder="email@exemplo.com"
+                  />
+                </label>
+                <label className="block text-xs font-semibold uppercase tracking-[0.25em] text-ink-faint">
+                  Origem
+                  <input
+                    value={origemInput}
+                    onChange={(e) => setOrigemInput(e.target.value)}
+                    className="mt-1 w-full rounded-xl border border-border bg-void px-3 py-3 text-sm text-ink outline-none transition focus:border-cyan/50 focus:ring-1 focus:ring-cyan/30"
+                    placeholder="Origem do lead"
+                  />
+                </label>
+                <label className="block text-xs font-semibold uppercase tracking-[0.25em] text-ink-faint">
+                  Interesse
+                  <select
+                    value={interesseInput}
+                    onChange={(e) => setInteresseInput(e.target.value)}
+                    className="mt-1 w-full rounded-xl border border-border bg-void px-3 py-3 text-sm text-ink outline-none transition focus:border-cyan/50 focus:ring-1 focus:ring-cyan/30"
+                  >
+                    <option value="COMPRA">Compra</option>
+                    <option value="VENDA">Venda</option>
+                    <option value="ALUGUEL">Aluguel</option>
+                  </select>
+                </label>
+                <label className="block text-xs font-semibold uppercase tracking-[0.25em] text-ink-faint">
+                  Tipo de imóvel
+                  <input
+                    value={tipoImovelInput}
+                    onChange={(e) => setTipoImovelInput(e.target.value)}
+                    className="mt-1 w-full rounded-xl border border-border bg-void px-3 py-3 text-sm text-ink outline-none transition focus:border-cyan/50 focus:ring-1 focus:ring-cyan/30"
+                    placeholder="Tipo de imóvel"
+                  />
+                </label>
+                <label className="block text-xs font-semibold uppercase tracking-[0.25em] text-ink-faint">
+                  Bairro
+                  <input
+                    value={bairroInput}
+                    onChange={(e) => setBairroInput(e.target.value)}
+                    className="mt-1 w-full rounded-xl border border-border bg-void px-3 py-3 text-sm text-ink outline-none transition focus:border-cyan/50 focus:ring-1 focus:ring-cyan/30"
+                    placeholder="Bairro"
+                  />
+                </label>
+                <label className="block text-xs font-semibold uppercase tracking-[0.25em] text-ink-faint">
+                  Valor
+                  <input
+                    value={valorInput}
+                    onChange={(e) => setValorInput(e.target.value)}
+                    className="mt-1 w-full rounded-xl border border-border bg-void px-3 py-3 text-sm text-ink outline-none transition focus:border-cyan/50 focus:ring-1 focus:ring-cyan/30"
+                    placeholder="Ex: 250000"
+                  />
+                </label>
+              </div>
+              <button
+                type="submit"
+                disabled={salvandoDados}
+                className="w-full rounded-xl bg-cyan px-4 py-3 text-xs font-semibold text-void transition hover:bg-cyan-soft disabled:opacity-60"
+              >
+                {salvandoDados ? "Salvando..." : "Salvar dados do lead"}
+              </button>
+            </form>
 
             <form onSubmit={salvarFollowUp} className="mt-5 grid gap-3 rounded-xl border border-border/70 bg-panel2/80 p-3 sm:grid-cols-2">
               <label className="text-xs font-medium uppercase tracking-wider text-ink-muted">
