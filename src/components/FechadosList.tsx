@@ -38,17 +38,24 @@ export default function FechadosList() {
       });
   }, []);
 
+  // Comissão pendente: soma de comissões para negócios que não estão marcados como RECEBIDA
   const totalComissaoPendente = deals
     .filter((d) => d.statusComissao !== "RECEBIDA")
     .reduce((acc, d) => acc + (d.valorComissao || 0), 0);
+
+  // Comissão recebida: soma do que foi efetivamente recebido (valorRecebido quando presente)
+  // Para negócios marcados como RECEBIDA, consideramos o valor total da comissão como recebido
   const totalComissaoRecebida = deals
-    .map((d) => {
-      if (d.valorRecebido !== undefined && d.valorRecebido !== null) return d.valorRecebido || 0;
-      if (d.statusComissao === "RECEBIDA") return d.valorComissao || 0;
-      return 0;
-    })
-    .reduce((acc, v) => acc + v, 0);
+    .reduce((acc, d) => {
+      const comissao = d.valorComissao || 0;
+      const recebido = d.valorRecebido;
+      if (d.statusComissao === "RECEBIDA") return acc + comissao;
+      return acc + (recebido !== undefined && recebido !== null ? recebido : 0);
+    }, 0);
+
+  // Faltando receber: soma do que falta em negócios não totalmente recebidos
   const totalFaltandoReceber = deals
+    .filter((d) => d.statusComissao !== "RECEBIDA")
     .map((d) => {
       const recebido = d.valorRecebido || 0;
       const comissao = d.valorComissao || 0;
