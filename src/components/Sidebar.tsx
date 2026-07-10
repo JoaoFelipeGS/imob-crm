@@ -17,11 +17,16 @@ export default function Sidebar({ user }: { user: { name?: string; email?: strin
   return (
     <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-border bg-panel/60 backdrop-blur-xl lg:flex">
       <div className="flex items-center gap-2.5 border-b border-border px-6 py-5">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-cyan/30 bg-void shadow-glow">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-            <circle cx="12" cy="12" r="3" stroke="#00E5C7" strokeWidth="1.5" />
-            <ellipse cx="12" cy="12" rx="10" ry="4.2" stroke="#7C5CFF" strokeWidth="1.5" />
-          </svg>
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-cyan/30 bg-void shadow-glow overflow-hidden">
+          <img
+            src="/logo.png"
+            alt="Órbita CRM"
+            className="h-8 w-8 object-cover"
+            onError={(e) => {
+              const target = e.currentTarget as HTMLImageElement;
+              if (target.src.indexOf("icon-192.png") === -1) target.src = "/icon-192.png";
+            }}
+          />
         </div>
         <div>
           <p className="font-display text-sm font-semibold leading-none text-ink">Órbita CRM</p>
