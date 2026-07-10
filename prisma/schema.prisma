@@ -93,6 +93,7 @@ model Deal {
   imovel                  String?
   valorVenda              Float?
   valorComissao           Float?
+  valorRecebido           Float?
   statusComissao          StatusComissao @default(PENDENTE)
   dataFechamento          DateTime       @default(now())
   dataPrevistaRecebimento DateTime?

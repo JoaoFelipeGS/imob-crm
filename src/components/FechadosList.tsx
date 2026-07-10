@@ -10,6 +10,7 @@ type Deal = {
   imovel?: string | null;
   valorVenda?: number | null;
   valorComissao?: number | null;
+  valorRecebido?: number | null;
   statusComissao: string;
   dataFechamento: string;
   dataPrevistaRecebimento?: string | null;
@@ -43,6 +44,13 @@ export default function FechadosList() {
   const totalComissaoRecebida = deals
     .filter((d) => d.statusComissao === "RECEBIDA")
     .reduce((acc, d) => acc + (d.valorComissao || 0), 0);
+  const totalFaltandoReceber = deals
+    .map((d) => {
+      const recebido = d.valorRecebido || 0;
+      const comissao = d.valorComissao || 0;
+      return Math.max(0, comissao - recebido);
+    })
+    .reduce((acc, v) => acc + v, 0);
   const totalVendas = deals.reduce((acc, d) => acc + (d.valorVenda || 0), 0);
 
   async function salvar(id: string, patch: Partial<Deal>) {
@@ -71,6 +79,7 @@ export default function FechadosList() {
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Kpi label="Total vendido" valor={formatMoeda(totalVendas)} cor="#5FF5E0" />
         <Kpi label="Comissão a receber" valor={formatMoeda(totalComissaoPendente)} cor="#FBBF24" />
+        <Kpi label="Faltando receber" valor={formatMoeda(totalFaltandoReceber)} cor="#F59E0B" />
         <Kpi label="Comissão recebida" valor={formatMoeda(totalComissaoRecebida)} cor="#34D399" />
       </div>
 
@@ -109,12 +118,12 @@ export default function FechadosList() {
                 </span>
               </div>
 
-              {!editando ? (
+                  {!editando ? (
                 <div className="mt-4 grid grid-cols-2 gap-4 text-sm sm:grid-cols-4">
                   <Info label="Valor da venda" valor={formatMoeda(d.valorVenda)} mono />
                   <Info label="Comissão" valor={formatMoeda(d.valorComissao)} mono destaque />
-                  <Info label="Previsão recebimento" valor={formatData(d.dataPrevistaRecebimento)} />
-                  <Info label="Recebido em" valor={formatData(d.dataRecebimento)} />
+                  <Info label="Recebido" valor={formatMoeda(d.valorRecebido || 0)} mono />
+                  <Info label="Faltando" valor={formatMoeda(Math.max(0, (d.valorComissao || 0) - (d.valorRecebido || 0)))} />
                 </div>
               ) : (
                 <EditForm deal={d} salvando={salvando} onSalvar={(patch) => { salvar(d.id, patch); setEditandoId(null); }} onCancelar={() => setEditandoId(null)} />
@@ -168,6 +177,7 @@ function EditForm({
   const [imovel, setImovel] = useState(deal.imovel || "");
   const [valorVenda, setValorVenda] = useState(deal.valorVenda?.toString() || "");
   const [valorComissao, setValorComissao] = useState(deal.valorComissao?.toString() || "");
+  const [valorRecebido, setValorRecebido] = useState(deal.valorRecebido?.toString() || "");
   const [statusComissao, setStatusComissao] = useState(deal.statusComissao);
   const [dataPrevista, setDataPrevista] = useState(deal.dataPrevistaRecebimento?.slice(0, 10) || "");
   const [dataRecebida, setDataRecebida] = useState(deal.dataRecebimento?.slice(0, 10) || "");
@@ -188,6 +198,10 @@ function EditForm({
       <div>
         <label className="mb-1 block text-[11px] uppercase tracking-wider text-ink-faint">Valor da comissão (R$)</label>
         <input type="number" step="0.01" className={inputCls} value={valorComissao} onChange={(e) => setValorComissao(e.target.value)} />
+      </div>
+      <div>
+        <label className="mb-1 block text-[11px] uppercase tracking-wider text-ink-faint">Valor recebido (R$)</label>
+        <input type="number" step="0.01" className={inputCls} value={valorRecebido} onChange={(e) => setValorRecebido(e.target.value)} />
       </div>
       <div>
         <label className="mb-1 block text-[11px] uppercase tracking-wider text-ink-faint">Status da comissão</label>
@@ -217,6 +231,7 @@ function EditForm({
               imovel,
               valorVenda: valorVenda as any,
               valorComissao: valorComissao as any,
+              valorRecebido: valorRecebido as any,
               statusComissao,
               dataPrevistaRecebimento: dataPrevista as any,
               dataRecebimento: dataRecebida as any,

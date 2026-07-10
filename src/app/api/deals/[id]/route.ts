@@ -13,6 +13,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   if (body.imovel !== undefined) data.imovel = body.imovel || null;
   if (body.valorVenda !== undefined) data.valorVenda = body.valorVenda === "" ? null : Number(body.valorVenda);
   if (body.valorComissao !== undefined) data.valorComissao = body.valorComissao === "" ? null : Number(body.valorComissao);
+  if (body.valorRecebido !== undefined) data.valorRecebido = body.valorRecebido === "" ? null : Number(body.valorRecebido);
   if (body.statusComissao !== undefined) data.statusComissao = body.statusComissao;
   if (body.dataPrevistaRecebimento !== undefined)
     data.dataPrevistaRecebimento = body.dataPrevistaRecebimento ? new Date(body.dataPrevistaRecebimento) : null;
