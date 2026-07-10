@@ -56,6 +56,9 @@ export async function DELETE(_req: NextRequest, { params }: { params: { id: stri
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
 
+  await prisma.note.deleteMany({ where: { clientId: params.id } });
+  await prisma.deal.deleteMany({ where: { clientId: params.id } });
   await prisma.client.delete({ where: { id: params.id } });
+
   return NextResponse.json({ ok: true });
 }

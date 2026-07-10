@@ -1,43 +1,61 @@
-import { prisma } from "@/lib/prisma";
+"use client";
+
+import { useEffect, useState } from "react";
 import { formatData, formatDataHora } from "@/lib/format";
 
-export default async function DashboardPage() {
+type ClientSummary = {
+  id: string;
+  nome: string;
+  nextContactAt?: string | null;
+  visitDate?: string | null;
+  telefone?: string | null;
+  status: string;
+};
+
+export default function DashboardPage() {
+  const [clientes, setClientes] = useState<ClientSummary[]>([]);
+  const [carregando, setCarregando] = useState(true);
+  const [deletandoIds, setDeletandoIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    async function carregar() {
+      setCarregando(true);
+      const res = await fetch("/api/clients");
+      if (res.ok) {
+        const data = await res.json();
+        setClientes(data);
+      }
+      setCarregando(false);
+    }
+
+    carregar();
+  }, []);
+
   const hoje = new Date();
   hoje.setHours(0, 0, 0, 0);
   const amanha = new Date(hoje);
   amanha.setDate(amanha.getDate() + 1);
 
-  const [clientes, visitas, totalClientes] = await Promise.all([
-    prisma.client.findMany({
-      where: {
-        nextContactAt: {
-          gte: hoje,
-          lt: amanha,
-        },
-      },
-      orderBy: { nextContactAt: "asc" },
-      select: {
-        id: true,
-        nome: true,
-        nextContactAt: true,
-        telefone: true,
-        status: true,
-      },
-    }),
-    prisma.client.findMany({
-      where: {
-        status: "VISITA_AGENDADA",
-      },
-      orderBy: { visitDate: "asc" },
-      select: {
-        id: true,
-        nome: true,
-        visitDate: true,
-        telefone: true,
-      },
-    }),
-    prisma.client.count(),
-  ]);
+  const clientesHoje = clientes.filter((cliente) => {
+    if (!cliente.nextContactAt) return false;
+    const data = new Date(cliente.nextContactAt);
+    return data >= hoje && data < amanha;
+  });
+
+  const visitas = clientes.filter((cliente) => cliente.status === "VISITA_AGENDADA" && cliente.visitDate);
+
+  async function excluirCliente(clienteId: string, nome: string) {
+    if (!confirm(`Excluir ${nome} definitivamente? Essa ação remove o lead e todos os dados associados.`)) {
+      return;
+    }
+
+    setDeletandoIds((prev) => [...prev, clienteId]);
+    const res = await fetch(`/api/clients/${clienteId}`, { method: "DELETE" });
+    if (res.ok) {
+      setClientes((prev) => prev.filter((cliente) => cliente.id !== clienteId));
+    }
+    setDeletandoIds((prev) => prev.filter((id) => id !== clienteId));
+  }
 
   return (
     <div className="mx-auto flex max-w-7xl flex-col gap-6">
@@ -53,11 +71,11 @@ export default async function DashboardPage() {
           <div className="grid gap-3 sm:grid-cols-3">
             <div className="rounded-3xl border border-border/80 bg-void p-4 text-center">
               <p className="text-sm uppercase tracking-[0.25em] text-ink-muted">Clientes totais</p>
-              <p className="mt-2 text-3xl font-semibold text-cyan-soft">{totalClientes}</p>
+              <p className="mt-2 text-3xl font-semibold text-cyan-soft">{clientes.length}</p>
             </div>
             <div className="rounded-3xl border border-border/80 bg-void p-4 text-center">
               <p className="text-sm uppercase tracking-[0.25em] text-ink-muted">Retornos hoje</p>
-              <p className="mt-2 text-3xl font-semibold text-violet-soft">{clientes.length}</p>
+              <p className="mt-2 text-3xl font-semibold text-violet-soft">{clientesHoje.length}</p>
             </div>
             <div className="rounded-3xl border border-border/80 bg-void p-4 text-center">
               <p className="text-sm uppercase tracking-[0.25em] text-ink-muted">Visitas agendadas</p>
@@ -75,24 +93,38 @@ export default async function DashboardPage() {
               <p className="mt-1 text-sm text-ink-muted">Retornos agendados para hoje em ordem de prioridade.</p>
             </div>
             <span className="rounded-full border border-cyan/20 bg-cyan/10 px-3 py-1 text-xs uppercase tracking-[0.2em] text-cyan-soft">
-              {clientes.length} item(s)
+              {clientesHoje.length} item(s)
             </span>
           </div>
-          {clientes.length === 0 ? (
+          {carregando ? (
+            <div className="rounded-3xl border border-border/80 bg-void p-6 text-center text-sm text-ink-muted">
+              Carregando painel...
+            </div>
+          ) : clientesHoje.length === 0 ? (
             <div className="rounded-3xl border border-border/80 bg-void p-6 text-center text-sm text-ink-muted">
               Nenhum follow-up marcado para hoje.
             </div>
           ) : (
             <div className="space-y-3">
-              {clientes.map((cliente) => (
+              {clientesHoje.map((cliente) => (
                 <div key={cliente.id} className="rounded-3xl border border-border/70 bg-panel2 p-4 transition hover:border-cyan/40 hover:bg-panel/90">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                       <p className="font-semibold text-ink">{cliente.nome}</p>
                       <p className="mt-1 text-sm text-ink-muted">{cliente.telefone || "Telefone não disponível"}</p>
                     </div>
-                    <div className="rounded-full bg-slate-950/70 px-3 py-1 text-sm text-cyan-soft">
-                      {formatDataHora(cliente.nextContactAt)}
+                    <div className="flex items-center gap-2">
+                      <div className="rounded-full bg-slate-950/70 px-3 py-1 text-sm text-cyan-soft">
+                        {formatDataHora(cliente.nextContactAt)}
+                      </div>
+                      <button
+                        type="button"
+                        disabled={deletandoIds.includes(cliente.id)}
+                        onClick={() => excluirCliente(cliente.id, cliente.nome)}
+                        className="rounded-full border border-danger/30 bg-danger/10 px-3 py-1 text-xs font-semibold text-danger transition hover:bg-danger/20 disabled:opacity-60"
+                      >
+                        {deletandoIds.includes(cliente.id) ? "Excluindo..." : "Excluir"}
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -119,9 +151,21 @@ export default async function DashboardPage() {
             <div className="space-y-3">
               {visitas.map((visita) => (
                 <div key={visita.id} className="rounded-3xl border border-border/70 bg-panel2 p-4 transition hover:border-violet/40 hover:bg-panel/90">
-                  <p className="font-semibold text-ink">{visita.nome}</p>
-                  <p className="mt-1 text-sm text-ink-muted">{visita.telefone || "Telefone não disponível"}</p>
-                  <p className="mt-2 text-xs uppercase tracking-[0.25em] text-violet-soft">{formatData(visita.visitDate)}</p>
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-semibold text-ink">{visita.nome}</p>
+                      <p className="mt-1 text-sm text-ink-muted">{visita.telefone || "Telefone não disponível"}</p>
+                      <p className="mt-2 text-xs uppercase tracking-[0.25em] text-violet-soft">{formatData(visita.visitDate)}</p>
+                    </div>
+                    <button
+                      type="button"
+                      disabled={deletandoIds.includes(visita.id)}
+                      onClick={() => excluirCliente(visita.id, visita.nome)}
+                      className="rounded-full border border-danger/30 bg-danger/10 px-3 py-1 text-xs font-semibold text-danger transition hover:bg-danger/20 disabled:opacity-60"
+                    >
+                      {deletandoIds.includes(visita.id) ? "Excluindo..." : "Excluir"}
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
