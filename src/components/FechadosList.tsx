@@ -42,8 +42,12 @@ export default function FechadosList() {
     .filter((d) => d.statusComissao !== "RECEBIDA")
     .reduce((acc, d) => acc + (d.valorComissao || 0), 0);
   const totalComissaoRecebida = deals
-    .filter((d) => d.statusComissao === "RECEBIDA")
-    .reduce((acc, d) => acc + (d.valorComissao || 0), 0);
+    .map((d) => {
+      if (d.valorRecebido !== undefined && d.valorRecebido !== null) return d.valorRecebido || 0;
+      if (d.statusComissao === "RECEBIDA") return d.valorComissao || 0;
+      return 0;
+    })
+    .reduce((acc, v) => acc + v, 0);
   const totalFaltandoReceber = deals
     .map((d) => {
       const recebido = d.valorRecebido || 0;
